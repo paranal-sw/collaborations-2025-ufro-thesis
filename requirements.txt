@@ -1,0 +1,3 @@
+eliana
+pandas
+numpy
