@@ -48,8 +48,6 @@ def cluster_y_con_tsne(df_numerico, nombre="", use_umap=False,
         use_umap (bool): Si True, usa UMAP para la visualización en lugar de t-SNE.
         dbscan_eps (float, optional): Valor de eps para DBSCAN. Si es None, se calcula dinámicamente.
         dbscan_min_samples (int, optional): Valor de min_samples para DBSCAN. Si es None, se calcula dinámicamente.
-        save_plot (bool): Si True, guarda el gráfico en un archivo.
-        plot_filename (str): Nombre del archivo para guardar el gráfico.
 
     Returns:
         DataFrame: Resultado con coordenadas 2D y etiquetas de clúster.

@@ -1,15 +1,12 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import numpy as np # Necesario para np.unique, np.nan
-
+import numpy as np 
 
 plt.style.use('default')
-plt.rcParams['font.size'] = 10 # Mantener el tamaño de fuente base
+plt.rcParams['font.size'] = 10 
 
-
-def graficos_dispersion_por_columna(df_sin_error, df_con_error):
-    # Esta función se mantiene igual, no fue el foco de la mejora actual
+def graficos_dispersion_por_columna(df_sin_error, df_con_error,nombre_archivo=None):
     columnas_parametros = [col for col in df_sin_error.columns if col != 'param']
     parametros_constantes = []
 
@@ -36,8 +33,11 @@ def graficos_dispersion_por_columna(df_sin_error, df_con_error):
     rows = (n_params + cols - 1) // cols
 
     fig, axes = plt.subplots(rows, cols, figsize=(15, 5*rows))
-    fig.suptitle('Dispersión de Parámetros\nRojo: Con Error | Azul: Sin Error', 
-                 fontsize=18, fontweight='bold', y=0.995)
+    titulo_archivo = f" - {nombre_archivo}" if nombre_archivo else ""
+    fig.suptitle(f'Análisis Comparativo de Parámetros por Condición de Error{titulo_archivo}\n' +
+                 f'Distribución de {n_params} parámetros variables | ' +
+                 f'Muestras: {len(df_sin_error)} sin error vs {len(df_con_error)} con error',                   
+                 fontsize=16, fontweight='bold', y=0.98)     
 
     if rows == 1:
         axes = axes.reshape(1, -1)
@@ -68,7 +68,8 @@ def graficos_dispersion_por_columna(df_sin_error, df_con_error):
     for i in range(len(columnas_validas), len(axes_flat)):
         axes_flat[i].set_visible(False)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
 
     return parametros_constantes
+
