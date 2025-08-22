@@ -8,6 +8,7 @@ def extract_params(df_original):
     df = df[df['logtext'].str.contains(r"^.* = .*$")]
     df['param'] = df['logtext'].str.split(' = ').str[0].str.replace(" ", ".")
     df['value'] = df['logtext'].str.split(' = ').str[1].str.replace("'", "")
+    df['value'] = df['value'].str.replace(' K', '', regex=False)
     df['numval'] = pd.to_numeric(df['value'], errors='coerce')
     df['strval'] = df['value'].where(df['numval'].isna(), "")
     df = df.drop(columns=['value'])
