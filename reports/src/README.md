@@ -19,7 +19,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `extract_params(df_original)`
 
-- **Propósito:**Limpia y extrae parámetros de un DataFrame de registros. Convierte valores a tipos numéricos y separa texto en columnas categóricas.
+- **Propósito:** Limpia y extrae parámetros de un DataFrame de registros. Convierte valores a tipos numéricos y separa texto en columnas categóricas.
 - **Parámetros:**
   - `df_original (pd.DataFrame)`  DataFrame con registros originales.
 - **Retorno:**
@@ -31,7 +31,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `extract_trace_parameters(df_meta, df_traces, extract_params, tpl_id)`
 
-- **Propósito:**Filtra y extrae los parámetros de traza para un `TPL_ID` específico, organizando los datos por `trace_id`.
+- **Propósito:** Filtra y extrae los parámetros de traza para un `TPL_ID` específico, organizando los datos por `trace_id`.
 - **Parámetros:**
   - `df_meta (pd.DataFrame)`  Metadatos de registros.
   - `df_traces (pd.DataFrame)` Registros de trazas.
@@ -46,7 +46,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `codificar_categoricas_por_columna(df_categorico)`
 
-- **Propósito:**Convierte valores de texto en representaciones numéricas (enteros), asignados en orden alfabético.
+- **Propósito:** Convierte valores de texto en representaciones numéricas (enteros), asignados en orden alfabético.
 - **Parámetros:**
   - `df_categorico (pd.DataFrame)`  Columnas categóricas.
 - **Retorno:**
@@ -58,7 +58,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `procesar_strval_in_memory(df_dict, diccionario_json_path=None)`
 
-- **Propósito:**Procesa un diccionario de DataFrames, codificando sus valores de texto.Opcionalmente guarda el diccionario de codificación en un archivo JSON.
+- **Propósito:** Procesa un diccionario de DataFrames, codificando sus valores de texto.Opcionalmente guarda el diccionario de codificación en un archivo JSON.
 - **Parámetros:**
   - `df_dict (dict[str, pd.DataFrame])`  Diccionario de DataFrames.
   - `diccionario_json_path (str, opcional)`  Ruta para guardar codificación.
@@ -73,7 +73,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `graficos_por_columna(df_sin_error, df_con_error, nombre_archivo=None, tipo="dispersion", log_y=False, use_log=True)`
 
-- **Propósito:**Genera gráficos comparativos de parámetros entre datos **sin error** y **con error**.Admite 4 tipos de gráficos:
+- **Propósito:** Genera gráficos comparativos de parámetros entre datos **sin error** y **con error**.Admite 4 tipos de gráficos:
   - `"dispersion"`  Dispersión punto a punto.
   - `"histograma"`  Histogramas de distribución.
   - `"densidad"`  Estimación de densidad (KDE).
@@ -90,11 +90,11 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 ---
 
-### 📌 `clustering.py`
+### `clustering.py`
 
 #### `cluster_y_con_tsne(df_numerico, nombre="", use_umap=False, dbscan_eps=None, dbscan_min_samples=None)`
 
-- **Propósito:**Aplica **DBSCAN** sobre datos numéricos escalados y reduce dimensionalidad con **t-SNE** o **UMAP** para visualización.
+- **Propósito:** Aplica **DBSCAN** sobre datos numéricos escalados y reduce dimensionalidad con **t-SNE** o **UMAP** para visualización.
 - **Parámetros:**
   - `df_numerico (pd.DataFrame)` Datos numéricos limpios.
   - `nombre (str)` Nombre del dataset.
@@ -108,7 +108,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `procesar_archivos_especificos(lista_archivos_ok, lista_archivos_err, carpeta_ok, carpeta_err, usar_umap=False, dbscan_eps=None, dbscan_min_samples=None)`
 
-- **Propósito:**Procesa múltiples archivos CSV de datos OK y ERROR, aplicando clustering y reducción de dimensionalidad.
+- **Propósito:** Procesa múltiples archivos CSV de datos OK y ERROR, aplicando clustering y reducción de dimensionalidad.
 - **Retorno:**
   - `(dict, dict)` con resultados para OK y ERROR.
 
@@ -116,7 +116,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `plot_combined_clusters(df_ok_result, df_err_result, filename_base, use_umap=False)`
 
-- **Propósito:**Genera un gráfico combinado de resultados de clustering para datos **OK (círculos)** y **ERROR (X)**.
+- **Propósito:** Genera un gráfico combinado de resultados de clustering para datos **OK (círculos)** y **ERROR (X)**.
 - **Parámetros:**
   - `df_ok_result (pd.DataFrame)` Clusters de datos OK.
   - `df_err_result (pd.DataFrame)` Clusters de datos ERROR.
@@ -129,7 +129,7 @@ Este repositorio contiene los módulos y scripts necesarios para el análisis de
 
 #### `cluster_and_plot_combined(df_ok_path, df_err_path, filename_base, use_umap=False, dbscan_eps=None, dbscan_min_samples=None)`
 
-- **Propósito:**Carga, limpia, combina y escala datos OK y ERROR; aplica DBSCAN + t-SNE/UMAP y genera un gráfico conjunto.
+- **Propósito:** Carga, limpia, combina y escala datos OK y ERROR; aplica DBSCAN + t-SNE/UMAP y genera un gráfico conjunto.
 - **Parámetros:**
   - `df_ok_path (str)` Ruta CSV datos OK.
   - `df_err_path (str)` Ruta CSV datos ERROR.
