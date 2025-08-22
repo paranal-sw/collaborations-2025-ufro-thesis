@@ -7,36 +7,6 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import os
 
-def aplicar_tsne_dbscan(df, perplexity=30, n_iter=300, eps=0.5, min_samples=5):
-    """
-    Aplica t-SNE para reducción de dimensionalidad y DBSCAN para clustering.
-    (Esta función ya existía, se mantiene para modularidad si la quieres usar por separado)
-    """
-    tsne = TSNE(n_components=2, perplexity=perplexity, n_iter=n_iter, random_state=42)
-    tsne_results = tsne.fit_transform(df)
-
-    dbscan = DBSCAN(eps=eps, min_samples=5)
-    clusters = dbscan.fit_predict(tsne_results)
-
-    df_resultado = pd.DataFrame(tsne_results, columns=['tsne1', 'tsne2'], index=df.index)
-    df_resultado['cluster'] = clusters
-    return df_resultado
-
-def aplicar_umap_dbscan(df, n_components=2, n_neighbors=15, min_dist=0.1, eps=0.5, min_samples=5):
-    """
-    Aplica UMAP para reducción de dimensionalidad y DBSCAN para clustering.
-    (Esta función ya existía, se mantiene para modularidad si la quieres usar por separado)
-    """
-    reducer = umap.UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=42)
-    umap_results = reducer.fit_transform(df)
-
-    dbscan = DBSCAN(eps=eps, min_samples=5)
-    clusters = dbscan.fit_predict(umap_results)
-
-    df_resultado = pd.DataFrame(umap_results, columns=[f'umap{i+1}' for i in range(n_components)], index=df.index)
-    df_resultado['cluster'] = clusters
-    return df_resultado
-
 def cluster_y_con_tsne(df_numerico, nombre="", use_umap=False,
                                    dbscan_eps=None, dbscan_min_samples=None):
     """
@@ -346,6 +316,7 @@ def cluster_and_plot_combined(df_ok_path, df_err_path, filename_base, use_umap=F
     combined_result_df = pd.DataFrame(combined_coords_2d, columns=['x', 'y'], index=combined_df_numeric_imputed.index)
     combined_result_df['cluster'] = combined_clusters
     combined_result_df['type'] = types 
+    combined_result_df.to_csv(f'{filename_base}_combined_results.csv', index=True)
 
     df_ok_result_for_plot = combined_result_df[combined_result_df['type'] == 'OK'].copy()
     df_err_result_for_plot = combined_result_df[combined_result_df['type'] == 'ERROR'].copy()
