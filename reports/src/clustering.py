@@ -46,7 +46,7 @@ def cluster_y_con_tsne(df_numerico, nombre="", use_umap=False,
 
     if use_umap:
         umap_n_neighbors = min(15, max(2, n_samples - 1)) 
-        reducer = umap.UMAP(n_components=2, n_neighbors=umap_n_neighbors, min_dist=0.1, random_state=42)
+        reducer = umap.UMAP(n_components=2, n_neighbors=umap_n_neighbors, min_dist=0.1)
         coords_2d = reducer.fit_transform(X_scaled)
         metodo = "UMAP"
     else:
@@ -204,7 +204,6 @@ def cluster_and_plot_combined(df_ok_path, df_err_path, filename_base, use_umap=F
     df_ok_num = None
     df_err_num = None
 
-    # Cargar y preprocesar datos OK
     if os.path.exists(df_ok_path):
         try:
             df_ok_raw = pd.read_csv(df_ok_path, index_col=0)
@@ -224,7 +223,6 @@ def cluster_and_plot_combined(df_ok_path, df_err_path, filename_base, use_umap=F
         print(f"Archivo OK no encontrado: {df_ok_path}")
         df_ok_num = None
 
-    # Cargar y preprocesar datos ERROR
     if os.path.exists(df_err_path):
         try:
             df_err_raw = pd.read_csv(df_err_path, index_col=0)
@@ -274,12 +272,10 @@ def cluster_and_plot_combined(df_ok_path, df_err_path, filename_base, use_umap=F
         print(f"DataFrame combinado muy pequeño después de la imputación para {filename_base}.")
         return
 
-    # Escalar los datos combinados
     X_scaled_combined = StandardScaler().fit_transform(combined_df_numeric_imputed)
     n_samples_combined = combined_df_numeric_imputed.shape[0]
     n_features_combined = combined_df_numeric_imputed.shape[1]
 
-    # Aplicar DBSCAN al conjunto de datos escalado combinado
     if dbscan_eps is None:
         if n_features_combined == 0:
             print(f"No hay características numéricas para DBSCAN en {filename_base}.")
@@ -300,7 +296,7 @@ def cluster_and_plot_combined(df_ok_path, df_err_path, filename_base, use_umap=F
     metodo = "UMAP"
     if use_umap:
         umap_n_neighbors = min(15, max(2, n_samples_combined - 1)) 
-        reducer = umap.UMAP(n_components=2, n_neighbors=umap_n_neighbors, min_dist=0.1, random_state=42)
+        reducer = umap.UMAP(n_components=2, n_neighbors=umap_n_neighbors, min_dist=0.1)
         combined_coords_2d = reducer.fit_transform(X_scaled_combined)
     else:
         metodo = "t-SNE"
@@ -316,10 +312,10 @@ def cluster_and_plot_combined(df_ok_path, df_err_path, filename_base, use_umap=F
     combined_result_df = pd.DataFrame(combined_coords_2d, columns=['x', 'y'], index=combined_df_numeric_imputed.index)
     combined_result_df['cluster'] = combined_clusters
     combined_result_df['type'] = types 
-    combined_result_df.to_csv(f'{filename_base}_combined_results.csv', index=True)
+    combined_result_df.to_csv(f'{filename_base}_combined_results__{metodo.lower()}.csv', index=True)
 
     df_ok_result_for_plot = combined_result_df[combined_result_df['type'] == 'OK'].copy()
     df_err_result_for_plot = combined_result_df[combined_result_df['type'] == 'ERROR'].copy()
 
     # Graficar los resultados combinados
-    plot_combined_clusters(df_ok_result_for_plot, df_err_result_for_plot, filename_base, use_umap=use_umap)
+    plot_combined_clusters(df_ok_result_for_plot, df_err_result_for_plot, f"{filename_base}_{metodo.lower()}", use_umap=use_umap)
