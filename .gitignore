@@ -27,6 +27,8 @@ process_secrets/*.b64.txt
 .vscode
 .env
 
-*/data/raw/*
+data/*
+*/data/*
+*.parket
 test_data/*/
 models/*/
