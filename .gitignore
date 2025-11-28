@@ -31,4 +31,4 @@ data/*
 */data/*
 *.parket
 test_data/*/
-models/*/
+models/*/data/ParlogsObservations/MATISSE-6m-traces.parket
