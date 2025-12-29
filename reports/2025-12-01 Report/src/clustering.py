@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
 from sklearn.decomposition import PCA
@@ -11,7 +10,6 @@ from sklearn.decomposition import PCA
 def cluster_todos_en_conjunto(
     df_ok: pd.DataFrame | None,
     df_err: pd.DataFrame | None,
-    use_umap: bool = False,           
     dbscan_eps: float | None = None,
     dbscan_min_samples: int | None = None,
     threshold_nan: float = 0.5,
@@ -20,128 +18,118 @@ def cluster_todos_en_conjunto(
     Clustering conjunto o individual (si solo se entrega df_ok o df_err).
 
     IMPORTANTE:
-    - DBSCAN se aplica sobre los parámetros originales normalizados (no sobre el embedding 2D).
-    - El embedding 2D se obtiene con PCA y se usa únicamente para visualización.
+    - NO se realiza imputación de valores faltantes.
+    - DBSCAN se aplica sobre los parámetros originales normalizados.
+    - El embedding 2D (PCA) se usa SOLO para visualización.
     """
-
-
+    # Caso solo OK o solo ERR
     if df_ok is None or df_err is None:
         df = df_ok if df_ok is not None else df_err
         origen = np.array(["OK"] * len(df)) if df_ok is not None else np.array(["ERR"] * len(df))
 
         df = df.apply(pd.to_numeric, errors="coerce").copy()
 
-
+        # Filtrado por proporción de NaN
         col_mask = df.isna().mean() < threshold_nan
         df = df.loc[:, col_mask]
+
         row_mask = df.isna().mean(axis=1) < threshold_nan
         df = df.loc[row_mask, :]
         origen = origen[row_mask.values]
 
         if df.empty or df.shape[1] == 0:
-            print("Dataset vacío tras limpieza (solo un origen). Se omite.")
+            print("Dataset vacío tras limpieza. Se omite.")
             return pd.DataFrame(), {}
 
-        # Quitar columnas constantes
+        # Eliminar columnas constantes
         nunique = df.nunique(dropna=True)
         df = df.loc[:, nunique[nunique >= 2].index]
+
         if df.shape[1] == 0:
-            print("Todas las columnas son constantes tras limpieza. Se omite este TPL_ID.")
+            print("Todas las columnas son constantes. Se omite.")
             return pd.DataFrame(), {}
 
-        X = SimpleImputer(strategy="median").fit_transform(df)
-        X = StandardScaler().fit_transform(X)
-        X = np.nan_to_num(X, nan=0.0)
+        # Eliminar filas con NaN restantes 
+        mask = ~df.isna().any(axis=1)
+        df = df.loc[mask]
+        origen = origen[mask.values]
 
+        if df.empty:
+            print("Dataset vacío tras eliminar NaN restantes.")
+            return pd.DataFrame(), {}
+
+        # Escalado
+        X = StandardScaler().fit_transform(df.values)
         n, p = X.shape
 
+    # Caso conjunto OK + ERR
+    else:
+        ok = df_ok.apply(pd.to_numeric, errors="coerce").copy()
+        er = df_err.apply(pd.to_numeric, errors="coerce").copy()
 
-        if p >= 2 and n >= 2:
-            pca = PCA(n_components=2, random_state=42)
-            emb = pca.fit_transform(X)
-        elif p >= 1 and n >= 1:
-
-            emb = np.column_stack([X[:, 0], np.zeros_like(X[:, 0])])
-            print(f"Solo {p} parámetro(s); embedding 2D degenerado (X, 0).")
-        else:
-            print("No hay suficientes datos para generar embedding 2D. Se omite.")
+        cols = sorted(list(set(ok.columns) & set(er.columns)))
+        if not cols:
+            print("No hay columnas comunes entre OK y ERR.")
             return pd.DataFrame(), {}
 
-        if dbscan_min_samples is None:
-            dbscan_min_samples = int(np.clip(np.log2(max(n, 2)), 3, 20))
+        ok, er = ok[cols], er[cols]
+        both = pd.concat([ok, er], axis=0, ignore_index=True)
+        origen = np.array(["OK"] * len(ok) + ["ERR"] * len(er))
 
-        if dbscan_eps is None:
-            rng = np.ptp(X, axis=0).mean()
-            dbscan_eps = max(0.3 * rng, 1e-3)
+        # Filtrado por proporción de NaN
+        col_mask = both.isna().mean() < threshold_nan
+        both = both.loc[:, col_mask]
 
-        labels = DBSCAN(eps=dbscan_eps, min_samples=dbscan_min_samples).fit_predict(X)
+        row_mask = both.isna().mean(axis=1) < threshold_nan
+        both = both.loc[row_mask, :]
+        origen = origen[row_mask.values]
 
-        df_res = pd.DataFrame({
-            "x": emb[:, 0],
-            "y": emb[:, 1],
-            "cluster": labels,
-            "origen": origen,
-        })
+        if both.empty or both.shape[1] == 0:
+            print("Dataset conjunto vacío tras limpieza.")
+            return pd.DataFrame(), {}
 
-        return df_res, {
-            "eps": dbscan_eps,
-            "min_samples": dbscan_min_samples,
-            "n": n,
-            "p": p,
-        }
+        # Eliminar columnas constantes
+        nunique = both.nunique(dropna=True)
+        both = both.loc[:, nunique[nunique >= 2].index]
 
-    ok = df_ok.apply(pd.to_numeric, errors="coerce").copy()
-    er = df_err.apply(pd.to_numeric, errors="coerce").copy()
+        if both.shape[1] == 0:
+            print("Todas las columnas son constantes.")
+            return pd.DataFrame(), {}
 
-    cols = sorted(list(set(ok.columns) & set(er.columns)))
-    if not cols:
-        print("No hay columnas comunes entre OK y ERR. Se omite.")
-        return pd.DataFrame(), {}
-    ok, er = ok[cols], er[cols]
+        # Eliminar filas con NaN restantes (SIN IMPUTAR)
+        mask = ~both.isna().any(axis=1)
+        both = both.loc[mask]
+        origen = origen[mask.values]
 
-    both = pd.concat([ok, er], axis=0, ignore_index=True)
-    origen = np.array(["OK"] * len(ok) + ["ERR"] * len(er))
+        if both.empty:
+            print("Dataset vacío tras eliminar NaN restantes.")
+            return pd.DataFrame(), {}
 
-    col_mask = both.isna().mean() < threshold_nan
-    both = both.loc[:, col_mask]
-    row_mask = both.isna().mean(axis=1) < threshold_nan
-    both = both.loc[row_mask, :]
-    origen = origen[row_mask.values]
+        # Escalado
+        X = StandardScaler().fit_transform(both.values)
+        n, p = X.shape
 
-    if both.empty or both.shape[1] == 0:
-        print("Dataset conjunto vacío tras limpieza. Se omite.")
-        return pd.DataFrame(), {}
-
-    # Quitar columnas constantes
-    nunique = both.nunique(dropna=True)
-    both = both.loc[:, nunique[nunique >= 2].index]
-    if both.shape[1] == 0:
-        print("Todas las columnas son constantes tras limpieza. Se omite este TPL_ID.")
-        return pd.DataFrame(), {}
-
-    X = SimpleImputer(strategy="median").fit_transform(both)
-    X = StandardScaler().fit_transform(X)
-    X = np.nan_to_num(X, nan=0.0)
-
-    n, p = X.shape
-
+    # PCA 
     if p >= 2 and n >= 2:
-        pca = PCA(n_components=2, random_state=42)
-        emb = pca.fit_transform(X)
-    elif p >= 1 and n >= 1:
+        emb = PCA(n_components=2, random_state=42).fit_transform(X)
+    elif p >= 1:
         emb = np.column_stack([X[:, 0], np.zeros_like(X[:, 0])])
-        print(f"Solo {p} parámetro(s); embedding 2D degenerado (X, 0).")
+        print("Embedding 2D degenerado (1D → X, 0).")
     else:
-        print("No hay suficientes datos para generar embedding 2D. Se omite.")
         return pd.DataFrame(), {}
 
+    # DBSCAN
     if dbscan_min_samples is None:
         dbscan_min_samples = int(np.clip(np.log2(max(n, 2)), 3, 20))
+
     if dbscan_eps is None:
         rng = np.ptp(X, axis=0).mean()
         dbscan_eps = max(0.3 * rng, 1e-3)
 
-    labels = DBSCAN(eps=dbscan_eps, min_samples=dbscan_min_samples).fit_predict(X)
+    labels = DBSCAN(
+        eps=dbscan_eps,
+        min_samples=dbscan_min_samples
+    ).fit_predict(X)
 
     df_res = pd.DataFrame({
         "x": emb[:, 0],
@@ -158,6 +146,7 @@ def cluster_todos_en_conjunto(
     }
 
 
+
 def plot_clusters_por_cluster_y_origen(
     df_res: pd.DataFrame,
     titulo: str = "Clusters en embedding 2D (color=cluster, marcador=origen)",
@@ -169,8 +158,8 @@ def plot_clusters_por_cluster_y_origen(
     show_legend: bool = True,
     max_legend_clusters: int = 20,
     jitter: float = 0.015,
-    save_path: str | None = None,   # <-- NUEVO: ruta PNG opcional
-    mostrar: bool = True,           # <-- NUEVO: mostrar o cerrar figura
+    save_path: str | None = None,   
+    mostrar: bool = True,          
 ):
     """
     Visualiza clusters detectados por DBSCAN en un embedding 2D (PCA).
